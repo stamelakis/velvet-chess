@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Velvet Chess</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="game-surface" aria-label="Chess game">
+        <div class="board-wrap">
+          <div class="board-meta top">
+            <div>
+              <span class="label">Black</span>
+              <strong id="blackStatus">AI</strong>
+            </div>
+            <div id="blackCaptured" class="captures" aria-label="Captured black pieces"></div>
+          </div>
+          <div id="board" class="board" aria-label="Chess board"></div>
+          <div class="board-meta bottom">
+            <div>
+              <span class="label">White</span>
+              <strong id="whiteStatus">You</strong>
+            </div>
+            <div id="whiteCaptured" class="captures" aria-label="Captured white pieces"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel" aria-label="Game controls and move history">
+        <div class="title-block">
+          <span>Velvet Chess</span>
+          <h1 id="headline">Play the machine</h1>
+        </div>
+
+        <div class="status-card">
+          <span class="label">Position</span>
+          <strong id="gameStatus">White to move</strong>
+          <p id="aiStatus">Choose a move. The AI responds automatically.</p>
+        </div>
+
+        <div class="controls">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="ai" selected>Vs AI</option>
+            <option value="local">Local multiplayer</option>
+            <option value="online">Online room</option>
+          </select>
+
+          <label for="difficulty">AI strength</label>
+          <select id="difficulty">
+            <option value="2">Quick</option>
+            <option value="3" selected>Sharp</option>
+            <option value="4">Deep</option>
+          </select>
+
+          <label for="side">Your side</label>
+          <select id="side">
+            <option value="w" selected>White</option>
+            <option value="b">Black</option>
+          </select>
+
+          <button id="newGame" type="button">New game</button>
+          <button id="undo" type="button">Undo</button>
+        </div>
+
+        <div id="onlineControls" class="online-controls hidden">
+          <label for="username">Username</label>
+          <input id="username" maxlength="20" autocomplete="nickname" placeholder="Player">
+
+          <label for="roomCode">Room code</label>
+          <input id="roomCode" maxlength="12" autocomplete="off" placeholder="ROOM42">
+
+          <button id="createRoom" type="button">Create room</button>
+          <button id="joinRoom" type="button">Join room</button>
+
+          <div id="onlineGameActions" class="online-game-actions hidden">
+            <button id="leaveGame" type="button">Leave to lobby</button>
+            <button id="endGame" type="button">End game</button>
+          </div>
+
+          <p id="roomStatus">Create a room, then send the link to a friend.</p>
+          <div id="shareBox" class="share-box hidden">
+            <span id="shareLink"></span>
+            <button id="copyLink" type="button">Copy</button>
+          </div>
+
+          <div class="active-games">
+            <div class="active-games-head">
+              <span>Active games</span>
+              <button id="refreshRooms" type="button">Refresh</button>
+            </div>
+            <div id="activeRooms" class="active-rooms">No active games yet.</div>
+          </div>
+        </div>
+
+        <div class="move-log">
+          <div class="log-head">
+            <span>Moves</span>
+            <span id="score">0.00</span>
+          </div>
+          <ol id="moves"></ol>
+        </div>
+      </aside>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
