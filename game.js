@@ -36,6 +36,7 @@ const PIECES = {
 const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 const FILES = "abcdefgh";
 const INF = 1_000_000;
+const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms are not available on this hosted page. AI and local multiplayer still work here. To play online, run the full server version from GitHub.";
 
 const PST = {
   p: [
@@ -759,7 +760,7 @@ async function api(path, body) {
   });
   const type = response.headers.get("Content-Type") || "";
   if (!type.includes("application/json")) {
-    throw new Error("Online rooms need the Python server.");
+    throw new Error(ONLINE_UNAVAILABLE_MESSAGE);
   }
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Room server error");

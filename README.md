@@ -29,7 +29,7 @@ For another device on the same network, use your computer's LAN IP with port `51
 
 GitHub Pages can host the static chess app, so AI and local multiplayer work from the Pages link.
 
-Online rooms need the Python server because GitHub Pages cannot run backend code. To play online over the internet, host `server.py` somewhere reachable or run it locally with a tunnel.
+Online rooms need the included Python server because GitHub Pages cannot run backend code. To play online over the internet, host `server.py` somewhere reachable or run it locally with a tunnel.
 
 ## Files
 
