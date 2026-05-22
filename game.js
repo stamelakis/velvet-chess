@@ -37,7 +37,8 @@ const PIECES = {
 const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 const FILES = "abcdefgh";
 const INF = 1_000_000;
-const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms need a public room server URL. Deploy the server once, paste that URL here, then Create room.";
+const PUBLIC_ROOM_SERVER = "https://velvet-chess-room-server.onrender.com";
+const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms are temporarily unavailable. Try again in a moment.";
 
 const PST = {
   p: [
@@ -622,9 +623,13 @@ function undo() {
 function syncControls() {
   const local = mode === "local";
   const onlineMode = mode === "online";
+  const hasBuiltInServer = !!PUBLIC_ROOM_SERVER;
+  const serverLabel = document.querySelector("label[for='serverUrl']");
   difficultyEl.disabled = local || onlineMode;
   onlineControlsEl.classList.toggle("hidden", !onlineMode);
   onlineGameActionsEl.classList.toggle("hidden", !onlineMode || !online.joined || online.finished);
+  if (serverLabel) serverLabel.classList.toggle("hidden", !onlineMode || hasBuiltInServer);
+  serverUrlEl.classList.toggle("hidden", !onlineMode || hasBuiltInServer);
   headlineEl.textContent = onlineMode ? "Play a friend" : (local ? "Play together" : "Play the machine");
   whiteStatusEl.textContent = local ? "Player 1" : (player === "w" ? "You" : "AI");
   blackStatusEl.textContent = local ? "Player 2" : (player === "b" ? "You" : "AI");
@@ -738,7 +743,10 @@ function roomLink(room) {
   const url = new URL(window.location.href);
   url.searchParams.set("mode", "online");
   url.searchParams.set("room", room);
-  if (serverUrlEl.value.trim()) url.searchParams.set("server", serverUrlEl.value.trim());
+  const currentServer = cleanServerUrl(serverUrlEl.value);
+  const defaultServer = cleanServerUrl(defaultServerUrl());
+  if (currentServer && currentServer !== defaultServer) url.searchParams.set("server", currentServer);
+  else url.searchParams.delete("server");
   return url.toString();
 }
 
@@ -1106,6 +1114,7 @@ function bootFromUrl() {
 }
 
 function defaultServerUrl() {
+  if (PUBLIC_ROOM_SERVER) return PUBLIC_ROOM_SERVER;
   return location.hostname.endsWith("github.io") ? "" : location.origin;
 }
 
