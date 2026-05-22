@@ -25,6 +25,17 @@ http://127.0.0.1:5174/
 
 For another device on the same network, use your computer's LAN IP with port `5174`.
 
+## Online Rooms From GitHub Pages
+
+The hosted GitHub Pages game is static. For online rooms, run or deploy the room server separately, then paste its URL into the `Room server` field in the game.
+
+Examples:
+
+```text
+http://127.0.0.1:5174
+https://your-tunnel-url.example
+```
+
 ## GitHub Pages
 
 GitHub Pages can host the static chess app, so AI and local multiplayer work from the Pages link.

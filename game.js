@@ -12,6 +12,7 @@ const undoEl = document.querySelector("#undo");
 const onlineControlsEl = document.querySelector("#onlineControls");
 const usernameEl = document.querySelector("#username");
 const roomCodeEl = document.querySelector("#roomCode");
+const serverUrlEl = document.querySelector("#serverUrl");
 const createRoomEl = document.querySelector("#createRoom");
 const joinRoomEl = document.querySelector("#joinRoom");
 const roomStatusEl = document.querySelector("#roomStatus");
@@ -36,7 +37,7 @@ const PIECES = {
 const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 const FILES = "abcdefgh";
 const INF = 1_000_000;
-const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms are not available on this hosted page. AI and local multiplayer still work here. To play online, run the full server version from GitHub.";
+const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms need a room server. Run server.py and open http://127.0.0.1:5174, or paste a hosted/tunnel server URL here.";
 
 const PST = {
   p: [
@@ -737,6 +738,7 @@ function roomLink(room) {
   const url = new URL(window.location.href);
   url.searchParams.set("mode", "online");
   url.searchParams.set("room", room);
+  if (serverUrlEl.value.trim()) url.searchParams.set("server", serverUrlEl.value.trim());
   return url.toString();
 }
 
@@ -753,7 +755,7 @@ function showRoomMessage(message) {
 }
 
 async function api(path, body) {
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     method: body ? "POST" : "GET",
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined
@@ -765,6 +767,15 @@ async function api(path, body) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Room server error");
   return data;
+}
+
+function apiUrl(path) {
+  const base = cleanServerUrl(serverUrlEl.value);
+  return base ? base + path : path;
+}
+
+function cleanServerUrl(value) {
+  return value.trim().replace(/\/+$/, "");
 }
 
 async function createOnlineRoom() {
@@ -789,6 +800,7 @@ async function enterOnlineRoom(create) {
 
   try {
     showRoomMessage("Joining room...");
+    localStorage.setItem("velvetChess:serverUrl", serverUrlEl.value.trim());
     const storageKey = `velvetChess:${room}:playerId`;
     const joined = await api(create ? "/api/create" : "/api/join", {
       room,
@@ -1068,6 +1080,11 @@ function bootFromUrl() {
   const room = cleanRoomCode(params.get("room") || "");
   if (params.get("mode") === "online" || room) modeEl.value = "online";
   if (room) roomCodeEl.value = room;
+  serverUrlEl.value = params.get("server") || localStorage.getItem("velvetChess:serverUrl") || defaultServerUrl();
+}
+
+function defaultServerUrl() {
+  return location.hostname.endsWith("github.io") ? "" : location.origin;
 }
 
 newGameEl.addEventListener("click", () => {
