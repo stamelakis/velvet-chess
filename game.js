@@ -138,7 +138,8 @@ function newState() {
     fullmove: 1,
     history: [],
     lastMove: null,
-    moveText: []
+    moveText: [],
+    result: null
   };
 }
 
@@ -184,7 +185,8 @@ function cloneState(s) {
     fullmove: s.fullmove,
     history: s.history.slice(),
     lastMove: s.lastMove ? { ...s.lastMove } : null,
-    moveText: s.moveText.slice()
+    moveText: s.moveText.slice(),
+    result: s.result
   };
 }
 
@@ -346,10 +348,30 @@ function pseudoMoves(s, side) {
 }
 
 function legalMoves(s, side = s.turn) {
+  if (s.result) return [];
   return pseudoMoves(s, side).filter(move => {
     const next = applyMove(s, move, false);
     return !inCheck(next, side);
   });
+}
+
+function positionKey(s) {
+  const pieces = s.board.map(piece => piece || "--").join("");
+  const castling = ["wK", "wQ", "bK", "bQ"].map(key => s.castling[key] ? key : "").join("");
+  return `${pieces}|${s.turn}|${castling || "-"}|${s.ep ?? "-"}`;
+}
+
+function repetitionCount(s, key = positionKey(s)) {
+  const positions = [...s.history, s];
+  return positions.reduce((count, position) => count + (positionKey(position) === key ? 1 : 0), 0);
+}
+
+function moveCreatesThirdRepetition(s, move) {
+  return repetitionCount(applyMove(s, move, false)) >= 3;
+}
+
+function repetitionResult(side) {
+  return `${side === "w" ? "White" : "Black"} loses by threefold repetition.`;
 }
 
 function applyMove(s, move, track = true) {
@@ -402,6 +424,7 @@ function applyMove(s, move, track = true) {
   if (movingSide === "b") next.fullmove++;
   next.turn = opposite(s.turn);
   next.lastMove = { from: move.from, to: move.to };
+  next.result = repetitionCount(next) >= 3 ? repetitionResult(movingSide) : null;
   if (track) next.moveText.push(notation(s, move, next));
   return next;
 }
@@ -418,6 +441,7 @@ function notation(before, move, after) {
 }
 
 function evaluate(s) {
+  if (s.result) return s.result.startsWith("White") ? -INF + 2 : INF - 2;
   const moves = legalMoves(s);
   if (!moves.length) return inCheck(s, s.turn) ? (s.turn === "w" ? -INF + 1 : INF - 1) : 0;
   let score = 0;
@@ -492,6 +516,7 @@ function chooseAiMove() {
 }
 
 function isPlayerTurn() {
+  if (state.result) return false;
   if (thinking || !legalMoves(state).length) return false;
   if (mode === "online") return online.joined && !online.finished && state.turn === online.color;
   return mode === "local" || state.turn === player;
@@ -503,14 +528,16 @@ function handleSquare(index) {
   if (selected !== null) {
     const move = legalForSelected.find(m => m.to === index);
     if (move) {
-      state = applyMove(state, preferPromotion(move), true);
+      const chosenMove = preferPromotion(move);
+      state = applyMove(state, chosenMove, true);
       selected = null;
       legalForSelected = [];
       render();
       if (mode === "online") {
-        sendOnlineMove(preferPromotion(move));
+        sendOnlineMove(chosenMove);
         return;
       }
+      if (state.result) return;
       if (mode === "ai") queueAi();
       return;
     }
@@ -607,6 +634,7 @@ function syncControls() {
 }
 
 function statusText() {
+  if (state.result) return state.result;
   const legal = legalMoves(state);
   const checked = inCheck(state, state.turn);
   if (!legal.length && checked) return `${state.turn === "w" ? "White" : "Black"} is checkmated`;
@@ -653,7 +681,13 @@ function render() {
 
 function helperText(hasLegalMoves) {
   if (thinking) return "AI is calculating...";
+  if (state.result) return "Game over by repetition.";
   if (!hasLegalMoves) return "Game over.";
+  if (selected !== null) {
+    const losingMoves = legalForSelected.filter(move => moveCreatesThirdRepetition(state, move)).length;
+    if (losingMoves) return `${losingMoves} selected move${losingMoves === 1 ? "" : "s"} would lose by repetition.`;
+  }
+  if (repetitionCount(state) === 2) return "Warning: this exact position has repeated twice. A third repeat loses.";
   if (mode === "online") {
     if (online.finished) return "Game over. The room is closed.";
     if (!online.joined) return "Create or join a room to start.";
@@ -809,10 +843,11 @@ async function sendOnlineMove(move) {
 }
 
 function isGameOver(s) {
-  return legalMoves(s).length === 0;
+  return !!s.result || legalMoves(s).length === 0;
 }
 
 function resultText() {
+  if (state.result) return state.result;
   if (legalMoves(state).length) return "";
   if (inCheck(state, state.turn)) {
     const winner = opposite(state.turn) === "w" ? "White" : "Black";

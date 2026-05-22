@@ -4,6 +4,7 @@ A polished browser chess game with:
 
 - Legal chess move generation
 - Check, checkmate, stalemate, castling, en passant, and promotion
+- Threefold repetition house rule: the player who creates the third repeated position loses
 - AI opponent with alpha-beta search and positional evaluation
 - Local two-player mode
 - No-login online room mode when running the included Python server
