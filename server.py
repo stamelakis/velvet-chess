@@ -1,3 +1,4 @@
+from os import environ
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from json import dumps, loads
 from pathlib import Path
@@ -242,7 +243,8 @@ class ChessHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("0.0.0.0", 5174), ChessHandler)
-    print("Velvet Chess multiplayer server: http://127.0.0.1:5174/")
+    port = int(environ.get("PORT", "5174"))
+    server = ThreadingHTTPServer(("0.0.0.0", port), ChessHandler)
+    print(f"Velvet Chess multiplayer server: http://127.0.0.1:{port}/")
     print("For another device on your network, use this computer's LAN IP with port 5174.")
     server.serve_forever()

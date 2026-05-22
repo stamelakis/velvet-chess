@@ -36,6 +36,15 @@ http://127.0.0.1:5174
 https://your-tunnel-url.example
 ```
 
+The easiest "friend can just click" setup is:
+
+1. Deploy this repo as a web service on Render or another Python host.
+2. Copy the deployed server URL.
+3. Open the GitHub Pages game, choose `Online room`, paste that URL into `Room server`, and create a room.
+4. Send the generated room link. It includes the server URL, so your friend can click and join.
+
+This repo includes `render.yaml` for Render blueprint deployment.
+
 ## GitHub Pages
 
 GitHub Pages can host the static chess app, so AI and local multiplayer work from the Pages link.

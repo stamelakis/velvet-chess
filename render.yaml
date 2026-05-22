@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: velvet-chess-room-server
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: "python server.py"
