@@ -37,7 +37,7 @@ const PIECES = {
 const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 const FILES = "abcdefgh";
 const INF = 1_000_000;
-const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms need a room server. Run server.py and open http://127.0.0.1:5174, or paste a hosted/tunnel server URL here.";
+const ONLINE_UNAVAILABLE_MESSAGE = "Online rooms need a public room server URL. Deploy the server once, paste that URL here, then Create room.";
 
 const PST = {
   p: [
@@ -778,6 +778,17 @@ function cleanServerUrl(value) {
   return value.trim().replace(/\/+$/, "");
 }
 
+function isHostedStaticPage() {
+  return location.hostname.endsWith("github.io");
+}
+
+function roomServerProblem() {
+  const value = cleanServerUrl(serverUrlEl.value);
+  if (!value && isHostedStaticPage()) return ONLINE_UNAVAILABLE_MESSAGE;
+  if (value && !/^https?:\/\/.+/i.test(value)) return "Room server must be a full URL, like https://your-server.onrender.com.";
+  return "";
+}
+
 async function createOnlineRoom() {
   roomCodeEl.value = cleanRoomCode(roomCodeEl.value) || randomRoomCode();
   await enterOnlineRoom(true);
@@ -795,6 +806,12 @@ async function enterOnlineRoom(create) {
   const room = cleanRoomCode(roomCodeEl.value);
   if (!room) {
     roomStatusEl.textContent = "Enter a room code first.";
+    return;
+  }
+  const serverProblem = roomServerProblem();
+  if (serverProblem) {
+    showRoomMessage(serverProblem);
+    activeRoomsEl.textContent = serverProblem;
     return;
   }
 
@@ -1002,6 +1019,11 @@ function stopOnlinePolling() {
 
 async function loadActiveRooms() {
   if (modeEl.value !== "online") return;
+  const serverProblem = roomServerProblem();
+  if (serverProblem) {
+    activeRoomsEl.textContent = serverProblem;
+    return;
+  }
   try {
     const data = await api("/api/rooms");
     renderActiveRooms(data.rooms || []);
