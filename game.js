@@ -743,7 +743,7 @@ function roomLink(room) {
   const url = new URL(window.location.href);
   url.searchParams.set("mode", "online");
   url.searchParams.set("room", room);
-  const currentServer = cleanServerUrl(serverUrlEl.value);
+  const currentServer = activeServerUrl();
   const defaultServer = cleanServerUrl(defaultServerUrl());
   if (currentServer && currentServer !== defaultServer) url.searchParams.set("server", currentServer);
   else url.searchParams.delete("server");
@@ -778,7 +778,7 @@ async function api(path, body) {
 }
 
 function apiUrl(path) {
-  const base = cleanServerUrl(serverUrlEl.value);
+  const base = activeServerUrl();
   return base ? base + path : path;
 }
 
@@ -786,14 +786,24 @@ function cleanServerUrl(value) {
   return value.trim().replace(/\/+$/, "");
 }
 
+function isFullServerUrl(value) {
+  return /^https?:\/\/.+/i.test(value);
+}
+
+function activeServerUrl() {
+  const configured = cleanServerUrl(serverUrlEl.value);
+  if (PUBLIC_ROOM_SERVER && !isFullServerUrl(configured)) return cleanServerUrl(PUBLIC_ROOM_SERVER);
+  return configured;
+}
+
 function isHostedStaticPage() {
   return location.hostname.endsWith("github.io");
 }
 
 function roomServerProblem() {
-  const value = cleanServerUrl(serverUrlEl.value);
+  const value = activeServerUrl();
   if (!value && isHostedStaticPage()) return ONLINE_UNAVAILABLE_MESSAGE;
-  if (value && !/^https?:\/\/.+/i.test(value)) return "Room server must be a full URL, like https://your-server.onrender.com.";
+  if (value && !isFullServerUrl(value)) return "Room server must be a full URL, like https://your-server.onrender.com.";
   return "";
 }
 
@@ -825,6 +835,7 @@ async function enterOnlineRoom(create) {
 
   try {
     showRoomMessage("Joining room...");
+    serverUrlEl.value = activeServerUrl();
     localStorage.setItem("velvetChess:serverUrl", serverUrlEl.value.trim());
     const storageKey = `velvetChess:${room}:playerId`;
     const joined = await api(create ? "/api/create" : "/api/join", {
@@ -1108,9 +1119,14 @@ async function copyShareLink() {
 function bootFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const room = cleanRoomCode(params.get("room") || "");
+  const serverParam = cleanServerUrl(params.get("server") || "");
+  const savedServer = cleanServerUrl(localStorage.getItem("velvetChess:serverUrl") || "");
   if (params.get("mode") === "online" || room) modeEl.value = "online";
   if (room) roomCodeEl.value = room;
-  serverUrlEl.value = params.get("server") || localStorage.getItem("velvetChess:serverUrl") || defaultServerUrl();
+  if (PUBLIC_ROOM_SERVER && savedServer && !isFullServerUrl(savedServer)) {
+    localStorage.removeItem("velvetChess:serverUrl");
+  }
+  serverUrlEl.value = isFullServerUrl(serverParam) ? serverParam : (PUBLIC_ROOM_SERVER ? defaultServerUrl() : savedServer || defaultServerUrl());
 }
 
 function defaultServerUrl() {
